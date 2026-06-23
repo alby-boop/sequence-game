@@ -515,10 +515,11 @@ function selectMode(m) {
   rArc.style.stroke = MODE_COLOR[m];
 
   // Set streak display
-  const stats = loadStats();
-  document.getElementById('ringNum').textContent   = stats.streak;
+  const stats  = loadStats();
+  const streak = stats.streak || 0;
+  document.getElementById('ringNum').textContent     = streak;
   document.getElementById('streakLabel').textContent =
-    stats.streak === 1 ? '1-day streak' : `${stats.streak}-day streak`;
+    streak === 1 ? '1-day streak' : `${streak}-day streak`;
 
   // Set timer
   TOTAL = DIFF_TIME[m];
