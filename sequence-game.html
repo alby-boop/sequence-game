@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sequence — Daily Puzzle</title>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    :root {
+      --bg:       #0f0f11;
+      --surf:     #1c1c1f;
+      --surf2:    #2a2a2e;
+      --border:   #3a3a3e;
+      --accent:   #7c6fff;
+      --acc-glow: rgba(124,111,255,.22);
+      --green:    #30d158;
+      --grn-glow: rgba(48,209,88,.22);
+      --red:      #ff453a;
+      --red-glow: rgba(255,69,58,.22);
+      --amber:    #ff9f0a;
+      --text:     #f2f2f7;
+      --muted:    #8e8e93;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .wrap { width:100%; max-width:440px; }
+
+    /* ── HEADER ── */
+    .hdr { text-align:center; margin-bottom:28px; }
+    .hdr h1 {
+      font-size:28px; font-weight:800; letter-spacing:7px;
+      text-transform:uppercase;
+      background: linear-gradient(135deg,#fff 0%,#a78bfa 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .hdr .today-date {
+      margin-top:5px; font-size:12px; letter-spacing:.8px;
+      text-transform:uppercase; color:var(--muted);
+    }
+
+    /* ── STATS BAR ── */
+    .stats {
+      display:flex; background:var(--surf);
+      border:1px solid var(--border); border-radius:16px;
+      margin-bottom:24px; overflow:hidden;
+    }
+    .stat { flex:1; text-align:center; padding:13px 0; border-right:1px solid var(--border); }
+    .stat:last-child { border-right:none; }
+    .stat-v { font-size:20px; font-weight:700; color:var(--accent); line-height:1; }
+    .stat-l { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; margin-top:3px; }
+
+    /* ── PUZZLE META ── */
+    .meta {
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:14px;
+    }
+    .meta-day { font-size:13px; color:var(--muted); }
+    .badge {
+      font-size:10px; font-weight:700; text-transform:uppercase;
+      letter-spacing:1px; padding:4px 12px; border-radius:20px;
+    }
+    .badge.easy   { background:rgba(48,209,88,.14);  color:#30d158; }
+    .badge.medium { background:rgba(255,214,10,.14); color:#ffd60a; }
+    .badge.hard   { background:rgba(255,159,10,.14); color:#ff9f0a; }
+    .badge.expert { background:rgba(255,69,58,.14);  color:#ff453a; }
+
+    /* ── TIMER ── */
+    .timer-wrap {
+      display:flex; justify-content:center;
+      position:relative; margin-bottom:18px;
+    }
+    .timer-svg { transform:rotate(-90deg); }
+    .t-track { fill:none; stroke:var(--surf2); stroke-width:4; }
+    .t-arc   {
+      fill:none; stroke:var(--accent); stroke-width:4;
+      stroke-linecap:round;
+      transition: stroke-dashoffset 1s linear, stroke .4s ease;
+    }
+    .timer-num {
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      font-size:20px; font-weight:700;
+      font-variant-numeric:tabular-nums;
+      transition:color .4s;
+    }
+
+    /* ── SEQUENCE CARD ── */
+    .seq-card {
+      background:var(--surf); border:1px solid var(--border);
+      border-radius:20px; padding:26px 18px; margin-bottom:18px;
+    }
+    .seq-row {
+      display:flex; align-items:center; justify-content:center;
+      flex-wrap:wrap; gap:5px;
+    }
+    .chip {
+      background:var(--surf2); border:1px solid var(--border);
+      border-radius:10px; padding:9px 13px;
+      font-size:19px; font-weight:700; min-width:50px;
+      text-align:center; opacity:0;
+    }
+    .chip.q { background:var(--accent); border-color:var(--accent); color:#fff; font-size:21px; }
+    .chip.pop { animation: popIn .35s cubic-bezier(.175,.885,.32,1.275) forwards; }
+    .comma { color:var(--muted); font-size:15px; align-self:center; }
+
+    @keyframes popIn {
+      from { opacity:0; transform:scale(.65) translateY(8px); }
+      to   { opacity:1; transform:scale(1)   translateY(0);   }
+    }
+
+    /* ── INPUT ── */
+    .inp-label {
+      font-size:12px; color:var(--muted); text-align:center;
+      margin-bottom:9px; letter-spacing:.4px;
+    }
+    .answer {
+      width:100%; background:var(--surf); border:2px solid var(--border);
+      border-radius:14px; padding:15px; font-size:26px; font-weight:700;
+      color:var(--text); text-align:center; outline:none;
+      transition:border-color .2s, box-shadow .2s;
+      -moz-appearance:textfield; margin-bottom:11px;
+      letter-spacing:2px;
+    }
+    .answer::-webkit-inner-spin-button,
+    .answer::-webkit-outer-spin-button { -webkit-appearance:none; }
+    .answer::placeholder { font-size:15px; font-weight:400; letter-spacing:0; color:var(--muted); }
+    .answer:focus { border-color:var(--accent); box-shadow:0 0 0 4px var(--acc-glow); }
+    .answer.correct { border-color:var(--green); box-shadow:0 0 0 4px var(--grn-glow); color:var(--green); }
+    .answer.wrong   { border-color:var(--red);   box-shadow:0 0 0 4px var(--red-glow); color:var(--red);   }
+
+    /* ── BUTTON ── */
+    .btn {
+      width:100%; background:var(--accent); color:#fff; border:none;
+      border-radius:14px; padding:16px; font-size:15px; font-weight:700;
+      letter-spacing:.8px; cursor:pointer; text-transform:uppercase;
+      transition:opacity .2s, transform .1s;
+    }
+    .btn:hover:not(:disabled) { opacity:.87; }
+    .btn:active:not(:disabled){ transform:scale(.98); }
+    .btn:disabled { opacity:.3; cursor:default; }
+
+    /* ── RESULT ── */
+    .result {
+      display:none; background:var(--surf); border:1px solid var(--border);
+      border-radius:20px; padding:22px; margin-top:14px; text-align:center;
+    }
+    .result.show { display:block; animation:slideUp .38s cubic-bezier(.16,1,.3,1); }
+    @keyframes slideUp {
+      from { opacity:0; transform:translateY(18px); }
+      to   { opacity:1; transform:translateY(0);    }
+    }
+    .res-icon  { font-size:42px; margin-bottom:9px; }
+    .res-title { font-size:19px; font-weight:700; margin-bottom:5px; }
+    .res-title.ok { color:var(--green); }
+    .res-title.no { color:var(--red);   }
+    .res-sub   { font-size:13px; color:var(--muted); margin-bottom:16px; }
+    .rule-box  { background:var(--surf2); border-radius:12px; padding:15px; text-align:left; }
+    .rule-lbl  { font-size:10px; font-weight:700; text-transform:uppercase;
+                 letter-spacing:1.1px; color:var(--accent); margin-bottom:5px; }
+    .rule-txt  { font-size:14px; line-height:1.6; }
+
+    /* ── DONE STATE ── */
+    #donePage { display:none; text-align:center; }
+    .done-icon  { font-size:54px; margin-bottom:14px; }
+    .done-title { font-size:21px; font-weight:700; color:var(--green); margin-bottom:6px; }
+    .done-sub   { font-size:14px; color:var(--muted); margin-bottom:26px; }
+    .cd-lbl     { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:5px; }
+    .cd-time    { font-size:36px; font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums; }
+    .done-card  {
+      background:var(--surf); border:1px solid var(--border);
+      border-radius:18px; padding:20px; margin-top:22px; text-align:left;
+    }
+    .done-res   { font-size:15px; font-weight:600; margin-bottom:10px; }
+    .done-res.ok{ color:var(--green); }
+    .done-res.no{ color:var(--red);   }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <h1>Sequence</h1>
+    <div class="today-date" id="todayDate"></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat"><div class="stat-v" id="sStreak">0</div><div class="stat-l">Streak</div></div>
+    <div class="stat"><div class="stat-v" id="sSolved">0</div><div class="stat-l">Solved</div></div>
+    <div class="stat"><div class="stat-v" id="sAcc">—</div><div class="stat-l">Accuracy</div></div>
+  </div>
+
+  <!-- GAME -->
+  <div id="gamePage">
+    <div class="meta">
+      <div class="meta-day" id="metaDay"></div>
+      <div class="badge" id="metaBadge"></div>
+    </div>
+
+    <!-- Timer -->
+    <div class="timer-wrap">
+      <svg width="74" height="74" class="timer-svg">
+        <circle class="t-track" cx="37" cy="37" r="31"/>
+        <circle class="t-arc" id="tArc" cx="37" cy="37" r="31"
+          stroke-dasharray="194.8" stroke-dashoffset="0"/>
+      </svg>
+      <div class="timer-num" id="tNum">15</div>
+    </div>
+
+    <!-- Sequence -->
+    <div class="seq-card">
+      <div class="seq-row" id="seqRow"></div>
+    </div>
+
+    <!-- Input -->
+    <div class="inp-label">What comes next?</div>
+    <input type="number" id="ans" class="answer" placeholder="Type your answer…" autocomplete="off"/>
+    <button class="btn" id="subBtn">Submit Answer</button>
+
+    <!-- Result -->
+    <div class="result" id="result">
+      <div class="res-icon"  id="resIcon"></div>
+      <div class="res-title" id="resTitle"></div>
+      <div class="res-sub"   id="resSub"></div>
+      <div class="rule-box">
+        <div class="rule-lbl">The Pattern</div>
+        <div class="rule-txt" id="resRule"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DONE (already played today) -->
+  <div id="donePage">
+    <div class="done-icon">✓</div>
+    <div class="done-title">Puzzle Complete</div>
+    <div class="done-sub">Come back tomorrow for the next sequence.</div>
+    <div class="cd-lbl">Next puzzle in</div>
+    <div class="cd-time" id="cdTime">--:--:--</div>
+    <div class="done-card" id="doneCard"></div>
+  </div>
+
+</div><!-- /wrap -->
+
+<script>
+/* ════════════════════════════════════════════════
+   PUZZLE LIBRARY  —  28 days, 4 weeks
+   Difficulty increases within each week (Mon→Sun)
+   and across weeks.
+   ════════════════════════════════════════════════ */
+const P = [
+  // ── WEEK 1  Easy → Hard ──────────────────────
+  { w:1,d:1, seq:[3,4,7,11,18],        ans:29,
+    rule:"Fibonacci-style — each number is the sum of the two before it: 3+4=7, 4+7=11, 7+11=18, 11+18=29",
+    diff:"Easy" },
+
+  { w:1,d:2, seq:[2,5,10,17,26],       ans:37,
+    rule:"Each term is n²+1: 1²+1=2, 2²+1=5, 3²+1=10, 4²+1=17, 5²+1=26, 6²+1=37 (hint: look at the gaps)",
+    diff:"Easy" },
+
+  { w:1,d:3, seq:[1,3,7,13,21],        ans:31,
+    rule:"Add increasing even numbers: +2, +4, +6, +8, +10… the amount added grows by 2 each step",
+    diff:"Easy" },
+
+  { w:1,d:4, seq:[10,11,13,16,20],     ans:25,
+    rule:"Add increasing amounts: +1, +2, +3, +4, +5… the gap between terms grows by 1 each time",
+    diff:"Easy" },
+
+  { w:1,d:5, seq:[3,9,7,21,19,57],     ans:55,
+    rule:"Alternating operations — multiply by 3, then subtract 2, repeating: ×3, −2, ×3, −2… (57−2=55)",
+    diff:"Medium" },
+
+  { w:1,d:6, seq:[5,11,19,29,41],      ans:55,
+    rule:"Differences increase by 2 each step: +6, +8, +10, +12, +14… look at the gaps between numbers",
+    diff:"Medium" },
+
+  { w:1,d:7, seq:[2,4,12,48],          ans:240,
+    rule:"The multiplier increases by 1 each time: ×2, ×3, ×4, ×5 (2→4→12→48→240)",
+    diff:"Hard" },
+
+  // ── WEEK 2  Easy → Hard ──────────────────────
+  { w:2,d:1, seq:[2,5,7,12,19],        ans:31,
+    rule:"Fibonacci-style — each number is the sum of the two before it: 2+5=7, 5+7=12, 7+12=19, 12+19=31",
+    diff:"Easy" },
+
+  { w:2,d:2, seq:[1,3,6,11,18],        ans:29,
+    rule:"Add consecutive prime numbers: +2, +3, +5, +7, +11… each amount added is the next prime",
+    diff:"Medium" },
+
+  { w:2,d:3, seq:[3,8,15,24,35],       ans:48,
+    rule:"Each term is n×(n+2): 1×3=3, 2×4=8, 3×5=15, 4×6=24, 5×7=35, 6×8=48",
+    diff:"Medium" },
+
+  { w:2,d:4, seq:[4,6,12,14,28,30],    ans:60,
+    rule:"Alternating operations — add 2, then multiply by 2, repeating: +2, ×2, +2, ×2… (30×2=60)",
+    diff:"Medium" },
+
+  { w:2,d:5, seq:[2,5,11,23,47],       ans:95,
+    rule:"Multiply by 2, then add 1 each time (×2 + 1): 2→5→11→23→47→95",
+    diff:"Hard" },
+
+  { w:2,d:6, seq:[1,8,27,64,125],      ans:216,
+    rule:"Perfect cubes — 1³=1, 2³=8, 3³=27, 4³=64, 5³=125, 6³=216",
+    diff:"Hard" },
+
+  { w:2,d:7, seq:[2,8,18,32,50],       ans:72,
+    rule:"Each term is 2×n²: 2×1²=2, 2×2²=8, 2×3²=18, 2×4²=32, 2×5²=50, 2×6²=72",
+    diff:"Hard" },
+
+  // ── WEEK 3  Medium → Expert ──────────────────
+  { w:3,d:1, seq:[4,7,11,18,29],       ans:47,
+    rule:"Fibonacci-style — each number is the sum of the two before it: 4+7=11, 7+11=18, 11+18=29, 18+29=47",
+    diff:"Medium" },
+
+  { w:3,d:2, seq:[6,10,15,21,28],      ans:36,
+    rule:"Add increasing amounts: +4, +5, +6, +7, +8… the gap grows by 1 each step",
+    diff:"Medium" },
+
+  { w:3,d:3, seq:[1,2,4,7,11,16],      ans:22,
+    rule:"Add increasing amounts: +1, +2, +3, +4, +5, +6… each step adds one more than the last",
+    diff:"Medium" },
+
+  { w:3,d:4, seq:[3,7,15,31,63],       ans:127,
+    rule:"Multiply by 2, then add 1 each time (×2 + 1): 3→7→15→31→63→127",
+    diff:"Hard" },
+
+  { w:3,d:5, seq:[1,1,2,3,5,8],        ans:13,
+    rule:"Fibonacci — each number is the sum of the two before it: 1+1=2, 1+2=3, 2+3=5, 3+5=8, 5+8=13",
+    diff:"Hard" },
+
+  { w:3,d:6, seq:[4,9,25,49,121],      ans:169,
+    rule:"Squares of prime numbers: 2²=4, 3²=9, 5²=25, 7²=49, 11²=121, 13²=169",
+    diff:"Hard" },
+
+  { w:3,d:7, seq:[2,9,28,65,126],      ans:217,
+    rule:"Each term is n³+1: 1³+1=2, 2³+1=9, 3³+1=28, 4³+1=65, 5³+1=126, 6³+1=217",
+    diff:"Expert" },
+
+  // ── WEEK 4  Medium-Hard → Expert ─────────────
+  { w:4,d:1, seq:[5,10,20,35,55],      ans:80,
+    rule:"Add increasing multiples of 5: +5, +10, +15, +20, +25… the gap grows by 5 each step",
+    diff:"Medium" },
+
+  { w:4,d:2, seq:[1,4,13,40,121],      ans:364,
+    rule:"Multiply by 3, then add 1 each time (×3 + 1): 1→4→13→40→121→364",
+    diff:"Hard" },
+
+  { w:4,d:3, seq:[1,2,6,24,120],       ans:720,
+    rule:"Factorials — multiply by the next integer each time: ×2, ×3, ×4, ×5, ×6… (1!, 2!, 3!, 4!, 5!, 6!)",
+    diff:"Hard" },
+
+  { w:4,d:4, seq:[8,13,21,34,55],      ans:89,
+    rule:"Fibonacci — each number is the sum of the two before it (starting mid-sequence): 8+13=21, 13+21=34, 21+34=55, 34+55=89",
+    diff:"Hard" },
+
+  { w:4,d:5, seq:[3,6,11,18,27,38],    ans:51,
+    rule:"Each term is n²+2: 1²+2=3, 2²+2=6, 3²+2=11, 4²+2=18, 5²+2=27, 6²+2=38, 7²+2=51",
+    diff:"Expert" },
+
+  { w:4,d:6, seq:[1,5,14,30,55],       ans:91,
+    rule:"Cumulative sum of squares — add the next perfect square each step: 1², +2²=5, +3²=14, +4²=30, +5²=55, +6²=91",
+    diff:"Expert" },
+
+  { w:4,d:7, seq:[2,12,36,80,150],     ans:252,
+    rule:"Each term is n²×(n+1): 1²×2=2, 2²×3=12, 3²×4=36, 4²×5=80, 5²×6=150, 6²×7=252",
+    diff:"Expert" },
+];
+
+/* ── CONSTANTS ── */
+const START  = new Date('2026-06-22T00:00:00'); // Day 0 = Monday June 22
+const CIRC   = 2 * Math.PI * 31;               // r=31 → 194.78
+
+const DIFF_TIME = { Easy:120, Medium:60, Hard:30, Expert:15 };
+
+/* ── STATE ── */
+let tid   = null;
+let TOTAL = 15;
+let left  = TOTAL;
+let over  = false;
+
+/* ── HELPERS ── */
+function todayIdx() {
+  const now  = new Date();
+  const t    = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const s    = new Date(START.getFullYear(), START.getMonth(), START.getDate());
+  const diff = Math.floor((t - s) / 86400000);
+  return ((diff % P.length) + P.length) % P.length;
+}
+function dayKey() {
+  const n = new Date();
+  return `seq_${n.getFullYear()}_${n.getMonth()}_${n.getDate()}`;
+}
+function loadStats() {
+  return JSON.parse(localStorage.getItem('seq_stats') ||
+    '{"streak":0,"solved":0,"played":0,"lastDate":null}');
+}
+function saveStats(s) { localStorage.setItem('seq_stats', JSON.stringify(s)); }
+
+function renderStats() {
+  const s = loadStats();
+  document.getElementById('sStreak').textContent = s.streak;
+  document.getElementById('sSolved').textContent = s.solved;
+  document.getElementById('sAcc').textContent    =
+    s.played ? Math.round(s.solved / s.played * 100) + '%' : '—';
+}
+
+function fmtDate(d) {
+  return d.toLocaleDateString('en-US',
+    { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+}
+
+/* ── TIMER ── */
+const arc  = document.getElementById('tArc');
+const tnum = document.getElementById('tNum');
+
+function paintTimer() {
+  const frac = left / TOTAL;
+  arc.style.strokeDashoffset = CIRC * (1 - frac);
+  // Format: show M:SS when ≥60s, just seconds otherwise
+  if (left >= 60) {
+    const m = Math.floor(left / 60);
+    const s = String(left % 60).padStart(2, '0');
+    tnum.textContent = `${m}:${s}`;
+    tnum.style.fontSize = '13px';
+  } else {
+    tnum.textContent = left;
+    tnum.style.fontSize = '20px';
+  }
+  if      (left <= 5)  { arc.style.stroke='var(--red)';    tnum.style.color='var(--red)';   }
+  else if (left <= 10) { arc.style.stroke='var(--amber)';  tnum.style.color='var(--amber)'; }
+  else                 { arc.style.stroke='var(--accent)';  tnum.style.color='var(--text)';  }
+}
+
+function startTimer() {
+  paintTimer();
+  tid = setInterval(() => {
+    left--;
+    paintTimer();
+    if (left <= 0) { clearInterval(tid); finish(null); }
+  }, 1000);
+}
+
+/* ── RENDER SEQUENCE ── */
+function renderSeq(seq) {
+  const row = document.getElementById('seqRow');
+  row.innerHTML = '';
+  const all = [...seq, '?'];
+  all.forEach((v, i) => {
+    if (i > 0) {
+      const c = document.createElement('span');
+      c.className = 'comma'; c.textContent = ',';
+      row.appendChild(c);
+    }
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (i === seq.length ? ' q' : '');
+    chip.textContent = v;
+    setTimeout(() => chip.classList.add('pop'), i * 80);
+    row.appendChild(chip);
+  });
+}
+
+/* ── FINISH ── */
+function finish(userVal) {
+  if (over) return;
+  over = true;
+  clearInterval(tid);
+
+  const puzzle   = P[todayIdx()];
+  const correct  = userVal !== null && userVal === puzzle.ans;
+  const inp      = document.getElementById('ans');
+  const btn      = document.getElementById('subBtn');
+
+  inp.disabled   = true;
+  inp.className  = 'answer ' + (correct ? 'correct' : 'wrong');
+  btn.disabled   = true;
+  btn.textContent = 'See you tomorrow!';
+
+  // Result panel
+  const panel = document.getElementById('result');
+  document.getElementById('resIcon').textContent  =
+    correct ? '🎉' : (userVal === null ? '⏱️' : '😬');
+  const rt = document.getElementById('resTitle');
+  rt.className = 'res-title ' + (correct ? 'ok' : 'no');
+  rt.textContent = correct ? 'Correct!' : (userVal === null ? "Time's Up!" : 'Not quite.');
+  document.getElementById('resSub').textContent =
+    correct ? `The answer is ${puzzle.ans}.` : `The answer was ${puzzle.ans}.`;
+  document.getElementById('resRule').textContent = puzzle.rule;
+  panel.classList.add('show');
+
+  // Persist
+  localStorage.setItem(dayKey(), JSON.stringify({ correct, ans: puzzle.ans, rule: puzzle.rule }));
+
+  // Update stats
+  const stats     = loadStats();
+  if (correct) stats.solved++;
+  stats.played++;
+
+  const todayStr = new Date().toDateString();
+  const yest     = new Date(); yest.setDate(yest.getDate()-1);
+  if (correct) {
+    stats.streak = (stats.lastDate === yest.toDateString()) ? stats.streak + 1 : 1;
+  } else {
+    stats.streak = 0;
+  }
+  stats.lastDate = todayStr;
+  saveStats(stats);
+  renderStats();
+}
+
+/* ── DONE PAGE ── */
+function showDone(saved) {
+  document.getElementById('gamePage').style.display = 'none';
+  document.getElementById('donePage').style.display = 'block';
+  const puzzle = P[todayIdx()];
+  const card   = document.getElementById('doneCard');
+  card.innerHTML = `
+    <div class="done-res ${saved.correct ? 'ok' : 'no'}">
+      ${saved.correct ? '✓ You solved it!' : '✗ The answer was ' + saved.ans}
+    </div>
+    <div class="rule-lbl">The Pattern</div>
+    <div class="rule-txt">${saved.rule || puzzle.rule}</div>`;
+  function tick() {
+    const now  = new Date();
+    const next = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
+    const ms   = next - now;
+    const h = String(Math.floor(ms/3600000)).padStart(2,'0');
+    const m = String(Math.floor((ms%3600000)/60000)).padStart(2,'0');
+    const s = String(Math.floor((ms%60000)/1000)).padStart(2,'0');
+    document.getElementById('cdTime').textContent = `${h}:${m}:${s}`;
+  }
+  tick(); setInterval(tick, 1000);
+}
+
+/* ── SUBMIT ── */
+function submit() {
+  const v = parseInt(document.getElementById('ans').value, 10);
+  if (isNaN(v)) { document.getElementById('ans').focus(); return; }
+  finish(v);
+}
+
+/* ── INIT ── */
+function init() {
+  document.getElementById('todayDate').textContent = fmtDate(new Date());
+  renderStats();
+
+  const saved = localStorage.getItem(dayKey());
+  if (saved) { showDone(JSON.parse(saved)); return; }
+
+  const puzzle = P[todayIdx()];
+  document.getElementById('metaDay').textContent = `Week ${puzzle.w} — Day ${puzzle.d}`;
+  const badge = document.getElementById('metaBadge');
+  badge.textContent = puzzle.diff;
+  badge.className   = 'badge ' + puzzle.diff.toLowerCase();
+
+  // Set timer duration based on difficulty
+  TOTAL = DIFF_TIME[puzzle.diff] || 15;
+  left  = TOTAL;
+
+  renderSeq(puzzle.seq);
+
+  // Start timer after sequence animation
+  const delay = puzzle.seq.length * 80 + 420;
+  setTimeout(() => {
+    document.getElementById('ans').focus();
+    startTimer();
+  }, delay);
+
+  document.getElementById('ans').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submit();
+  });
+  document.getElementById('subBtn').addEventListener('click', submit);
+}
+
+init();
+</script>
+</body>
+</html>
