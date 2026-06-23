@@ -173,7 +173,7 @@
     /* ── SHARE CARD ── */
     .share-preview {
       background:var(--surf2); border-radius:12px; padding:14px 16px;
-      margin-bottom:12px; font-size:14px; line-height:1.8;
+      margin-bottom:12px; font-size:17px; line-height:1.8;
       text-align:left; color:var(--text); white-space:pre-wrap;
     }
     .copy-btn {
@@ -189,7 +189,7 @@
     .rule-box { background:var(--surf2); border-radius:12px; padding:15px; text-align:left; }
     .rule-lbl { font-size:10px; font-weight:700; text-transform:uppercase;
                 letter-spacing:1.1px; color:var(--accent); margin-bottom:5px; }
-    .rule-txt { font-size:14px; line-height:1.6; }
+    .rule-txt { font-size:16px; line-height:1.6; }
 
     /* ── DONE PAGE ── */
     #donePage { display:none; text-align:center; }
@@ -289,12 +289,12 @@
       <div class="res-icon"  id="resIcon"></div>
       <div class="res-title" id="resTitle"></div>
       <div class="res-sub"   id="resSub"></div>
-      <div class="share-preview" id="sharePreview"></div>
-      <button class="copy-btn" id="copyBtn" onclick="copyShare()">📋 Copy result to share</button>
-      <div class="rule-box">
+      <div class="rule-box" style="margin-bottom:14px;">
         <div class="rule-lbl">The Pattern</div>
         <div class="rule-txt" id="resRule"></div>
       </div>
+      <div class="share-preview" id="sharePreview"></div>
+      <button class="copy-btn" id="copyBtn" onclick="copyShare()">📋 Copy result to share</button>
     </div>
 
   </div>
@@ -477,7 +477,7 @@ function emojiBar(timeLeft, total) {
 function buildShareText(puzzle, m, timeLeft, total, streak, correct) {
   const emoji  = MODE_EMOJI[m];
   const result = correct ? `${streak}-day streak` : 'Better luck tomorrow';
-  return `🔢 Sequence\n${emoji} ${result}`;
+  return `${emoji} ${result}`;
 }
 
 /* ═══ RING / TIMER ═══ */
